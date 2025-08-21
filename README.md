@@ -2,11 +2,6 @@
 
 A simple, interactive web application built with vanilla HTML, CSS, and JavaScript to visualize the concept of Time Division Multiplexing (TDM). This tool is designed for educational purposes to help students and enthusiasts understand how multiple data streams can be combined into a single signal over a shared medium.
 
-**[Live Demo Here](https://YourUsername.github.io/tdm-visualizer/)** *(Replace YourUsername with your actual GitHub username after deploying to GitHub Pages)*
-
-![TDM Visualizer in Action](screenshot.gif)  
-*(Suggestion: Create a GIF of your simulation and name it `screenshot.gif` to display it here)*
-
 ---
 
 ## Features
