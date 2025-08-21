@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDM Visualizer</title>
+    <style>
+        html {
+            height: 100%;
+            box-sizing: border-box;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f4f8;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #005a9c;
+            text-align: center;
+            margin: 0 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #005a9c;
+            width: 100%;
+        }
+        h2 {
+            color: #005a9c;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 8px;
+            font-size: 1.3em;
+        }
+        h3 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #333;
+            text-align: left;
+            margin-top: 0;
+        }
+
+        .container {
+            margin: 0 auto 20px auto;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+            flex-grow: 1;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .input-section, .controls, .parameters {
+            min-height: 200px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .input-group input[type="number"],
+        .input-group input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        .input-group .tooltip {
+            display: block;
+            font-size: 0.8em;
+            color: #777;
+            margin-top: 3px;
+        }
+
+        #sender-messages-inputs .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #sender-messages-inputs label {
+            flex-basis: 80px;
+            flex-shrink: 0;
+            margin-bottom: 0;
+            text-align: right;
+        }
+        #sender-messages-inputs input {
+            flex-grow: 1;
+            width: auto;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin-top: auto;
+        }
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .controls button {
+            margin-top: 0;
+            align-self: stretch;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+        #speed-slider {
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        #speed-value {
+            font-weight: bold;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .parameters {
+            justify-content: center;
+        }
+        .parameters p {
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+        .parameters span {
+            font-weight: bold;
+            color: #007bff;
+            margin-left: 5px;
+        }
+        #status-message {
+            font-style: italic;
+            color: #dc3545;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #status-message.running {
+            color: #28a745;
+        }
+        #status-message.paused {
+            color: #ffc107;
+        }
+        #status-message.finished {
+            color: #17a2b8;
+        }
+
+        .visualization {
+            grid-column: 1 / -1;
+            min-height: 400px;
+        }
+        
+        .vis-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+            flex-grow: 1;
+        }
+        
+        .senders-receivers-area {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        .senders-area, .receivers-area {
+            flex: 1;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            width: 45%;
+        }
+        
+        .channel-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            position: relative;
+        }
+        
+        .mux, .demux {
+            width: 80px;
+            height: 80px;
+            background-color: #6c757d;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 4px;
+            font-weight: bold;
+            z-index: 10;
+        }
+        
+        .channel {
+            flex-grow: 1;
+            height: 60px;
+            background: linear-gradient(to right, #d0d8e0, #e8eff5, #d0d8e0);
+            border: 1px solid #aaa;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            margin: 0 10px;
+        }
+
+        .frame-construction {
+            position: absolute;
+            top: -50px;
+            left: 100px;
+            border: 2px dashed #007bff;
+            padding: 8px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            background-color: #f8f9fa;
+            width: auto;
+            max-width: 90%;
+            flex-wrap: wrap;
+            justify-content: center;
+            border-radius: 4px;
+            z-index: 5;
+        }
+        
+        .frame-construction .label {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e9ecef;
+            padding: 2px 8px;
+            font-size: 0.85em;
+            color: #555;
+            border-radius: 3px;
+            font-weight: normal;
+        }
+
+        .frame {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 90px;
+            display: flex;
+            border: 1px solid #333;
+            background-color: #fff;
+            border-radius: 3px;
+            height: 40px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.25);
+            transition: left 0.1s linear;
+            white-space: nowrap;
+            align-items: stretch;
+        }
+
+        .frame-slot {
+            padding: 0 8px;
+            border-right: 1px dotted #aaa;
+            min-width: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+        .frame-slot:last-child {
+            border-right: none;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .sender, .receiver {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff;
+            font-size: 0.9em;
+            position: relative;
+            overflow: hidden;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+        }
+        .sender-id, .receiver-id {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            padding-left: 5px;
+            border-left: 5px solid transparent;
+        }
+        .sender-data, .receiver-data {
+            font-family: 'Courier New', Courier, monospace;
+            word-wrap: break-word;
+            flex-grow: 1;
+        }
+        .highlight-data {
+            background-color: yellow;
+            font-weight: bold;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        .sender-0 .frame-slot, .sender-color-0 { background-color: #dc3545; }
+        .sender-1 .frame-slot, .sender-color-1 { background-color: #28a745; }
+        .sender-2 .frame-slot, .sender-color-2 { background-color: #ffc107; }
+        .sender-3 .frame-slot, .sender-color-3 { background-color: #17a2b8; }
+        .sender-4 .frame-slot, .sender-color-4 { background-color: #6f42c1; }
+        .sender-5 .frame-slot, .sender-color-5 { background-color: #fd7e14; }
+        .sender-6 .frame-slot, .sender-color-6 { background-color: #20c997; }
+        .sender-7 .frame-slot, .sender-color-7 { background-color: #e83e8c; }
+        .sender-8 .frame-slot, .sender-color-8 { background-color: #6610f2; }
+        .sender-9 .frame-slot, .sender-color-9 { background-color: #6c757d; }
+
+        .sender-0 .sender-id { border-left-color: #dc3545; }
+        .sender-1 .sender-id { border-left-color: #28a745; }
+        .sender-2 .sender-id { border-left-color: #ffc107; }
+        .sender-3 .sender-id { border-left-color: #17a2b8; }
+        .sender-4 .sender-id { border-left-color: #6f42c1; }
+        .sender-5 .sender-id { border-left-color: #fd7e14; }
+        .sender-6 .sender-id { border-left-color: #20c997; }
+        .sender-7 .sender-id { border-left-color: #e83e8c; }
+        .sender-8 .sender-id { border-left-color: #6610f2; }
+        .sender-9 .sender-id { border-left-color: #6c757d; }
+
+        .receiver-0 { border-left: 5px solid #dc3545; }
+        .receiver-1 { border-left: 5px solid #28a745; }
+        .receiver-2 { border-left: 5px solid #ffc107; }
+        .receiver-3 { border-left: 5px solid #17a2b8; }
+        .receiver-4 { border-left: 5px solid #6f42c1; }
+        .receiver-5 { border-left: 5px solid #fd7e14; }
+        .receiver-6 { border-left: 5px solid #20c997; }
+        .receiver-7 { border-left: 5px solid #e83e8c; }
+        .receiver-8 { border-left: 5px solid #6610f2; }
+        .receiver-9 { border-left: 5px solid #6c757d; }
+    </style>
+</head>
+<body>
+    <h1>Time Division Multiplexing (TDM) Visualizer</h1>
+
+    <div class="container">
+        <div class="input-section card" style="overflow-x: hidden;">
+            <h2>Configuration</h2>
+            <div class="input-group">
+                <label for="num-senders">Number of Senders:</label>
+                <input type="number" id="num-senders" value="3" min="1" max="10">
+            </div>
+            <div id="sender-messages-inputs">
+            </div>
+            <div class="input-group">
+                <label for="bits-per-slot">Data Units per Frame Slot:</label>
+                <input type="number" id="bits-per-slot" value="1" min="1" max="5">
+                <span class="tooltip">How many characters/bits from each sender go into one frame slot.</span>
+                <label for="input-rate">Input Rate(char/s):</label>
+                <input type="number" id="input-rate" value="1" min="1">
+            </div>
+            <button id="setup-button">Initialize Simulation</button><br>
+        </div>
+        
+        
+
+        <div class="visualization card">
+            <h2>Visualization</h2>
+            <div class="vis-area">
+                <div class="senders-receivers-area">
+                    <div class="senders-area" id="senders-area">
+                        <h3>Senders</h3>
+                    </div>
+                    <div class="receivers-area" id="receivers-area">
+                        <h3>Receivers</h3>
+                    </div>
+                </div>
+
+                <div class="channel-container">
+                    <div class="channel" id="channel">
+                        <div class="frame-construction" id="frame-construction">
+                            <div class="label">Frame Assembly</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="parameters card" style="width: 100%;">
+            <h2>Calculated Parameters</h2>
+            <p>Frame Size: <span id="param-frame-size">--</span> (Unit of data = 1 character)</p>
+            <p>Input Slot Duration: <span id="param-input-slot-time">--</span></p>
+            <p>Output Slot Duration: <span id="param-output-slot-time">--</span></p>
+            <p>Output Frame Duration: <span id="param-frame-time">--</span></p>
+            <p>Output Frame Rate: <span id="param-frame-rate">--</span></p>
+            <p>Channel Character Rate: <span id="param-bit-rate">--</span></p>
+            <p style="display: none;">Status: <span id="status-message">Idle</span></p>
+        </div>
+    </div>
+    
+    <script src="js1.js"></script>
+</body>
+</html>
